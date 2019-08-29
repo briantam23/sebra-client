@@ -20,11 +20,13 @@ export const login = (credentials, history) => (
         }
         history.push(`/account/${auth.id}`);
         dispatch(_setAuth(auth)); */
+        console.log(credentials)
         axios.post('https://vast-plains-55545.herokuapp.com/api/login', credentials)
             .then(res => res.data)
             .then(data => {
                 console.log(data)
                 //dispatch(_setAuth(auth));
             })
+            .catch(err => console.log(err))
     }
 )

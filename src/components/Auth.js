@@ -69,7 +69,7 @@ const Auth = ({ pathname, history }) => {
   const [state, setState] = React.useState({
     username: '',
     password: '',
-    error: ''
+    /* error: '' */
   });
 
   const handleChange = id => e => {
