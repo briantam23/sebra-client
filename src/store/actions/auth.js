@@ -8,27 +8,26 @@ export const exchangeTokenForAuth = (params = {}, history) => (
         const chargeAmount = Number(params.chargeAmount);
 
         const token = window.localStorage.getItem('token');
-        console.log(token, 'exchange token')
+
         if(!token) return;
         return axios.get('https://vast-plains-55545.herokuapp.com/api/auth', { headers: { authorization: token } })
             .then(res => res.data.data)
             .then(auth => {
-                //if(history) history.push(/profile/${auth.id});
-                console.log(auth)
                 if(auth.type === 'customer') { 
-                    if(recipientAddress && chargeAmount) {
-                        history.push(`/account/${recipientAddress}/${chargeAmount}`);
-                    }
-                    else history.push('/account');
-                    
                     dispatch(_setCustomerAuth(auth));
+                    if(history) {
+                        if(recipientAddress && chargeAmount) {
+                            history.push(`/account/${recipientAddress}/${chargeAmount}`);
+                        }
+                        else history.push('/account');
+                    }
                 }
                 else {
-                    history.push('/dashboard'); 
                     dispatch(_setBusinessAuth(auth));
+                    if(history) history.push('/dashboard'); 
                 }   
             }) 
-            .catch(ex => window.localStorage.removeItem('token'))
+            //.catch(ex => window.localStorage.removeItem('token'))
     }
 )
 
@@ -55,7 +54,7 @@ export const logout = (history, recipientAddress, chargeAmount) => {
 
 export const login = (state, params, history) => {
     const { username, password } = state;
-
+    console.log('login')
     return dispatch => (
         axios.post('https://vast-plains-55545.herokuapp.com/api/auth', { username, password })
             .then(res => res.data.data)
