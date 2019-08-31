@@ -2,16 +2,32 @@ import { SET_CUSTOMER_AUTH, SET_BUSINESS_AUTH, REMOVE_AUTH } from '../constants'
 import axios from 'axios';
 
 
-export const exchangeTokenForAuth = history => (
+export const exchangeTokenForAuth = (params = {}, history) => (
     dispatch => {
+        const { recipientAddress } = params;
+        const chargeAmount = Number(params.chargeAmount);
+
         const token = window.localStorage.getItem('token');
+        console.log(token, 'exchange token')
         if(!token) return;
         return axios.get('https://vast-plains-55545.herokuapp.com/api/auth', { headers: { authorization: token } })
-            .then(res => res.data)
+            .then(res => res.data.data)
             .then(auth => {
-                dispatch(_setCustomerAuth(auth));
                 //if(history) history.push(/profile/${auth.id});
-            })
+                console.log(auth)
+                if(auth.type === 'customer') { 
+                    if(recipientAddress && chargeAmount) {
+                        history.push(`/account/${recipientAddress}/${chargeAmount}`);
+                    }
+                    else history.push('/account');
+                    
+                    dispatch(_setCustomerAuth(auth));
+                }
+                else {
+                    history.push('/dashboard'); 
+                    dispatch(_setBusinessAuth(auth));
+                }   
+            }) 
             .catch(ex => window.localStorage.removeItem('token'))
     }
 )
@@ -29,61 +45,23 @@ const _removeAuth = auth => ({
     auth
 })
 
-/* export const logout = (history, recipientAddress, chargeAmount) => (
-    dispatch => {
-        axios.post('https://vast-plains-55545.herokuapp.com/api/logout')
-            .then(res => res.data.data)
-            .then(data => {
-                console.log(data)
-                recipientAddress && chargeAmount 
-                    ? history.push(`/login/${recipientAddress}/${chargeAmount}`) 
-                    : history.push('/login')
-                dispatch(_removeAuth({}))
-            })
-    }
-) */
 export const logout = (history, recipientAddress, chargeAmount) => {
     window.localStorage.removeItem('token');
-    //history.push('/profile');
-    return _setCustomerAuth({});
+    recipientAddress && chargeAmount 
+        ? history.push(`/login/${recipientAddress}/${chargeAmount}`) 
+        : history.push('/login')
+    return _removeAuth({});
  }
 
-/* export const login = (state, params, history) => {
-    const { username, password, type } = state;
-    const { recipientAddress } = params;
-    const chargeAmount = Number(params.chargeAmount);
-    return dispatch => (
-        type === 'customer'
-            ? ( axios.post('https://vast-plains-55545.herokuapp.com/api/login', { username, password, credentials: 'same-origin',})
-                    .then(res => res.data.data)
-                    .then(data => {
-                        if(recipientAddress && chargeAmount) { 
-                            history.push(`/account/${recipientAddress}/${chargeAmount}`);
-                        }
-                        else history.push('/account');
-                        dispatch(_setCustomerAuth(data));
-                    })
-        )
-        : ( axios.post('https://vast-plains-55545.herokuapp.com/api/businessLogin', { username, password })
-                .then(res => res.data.data)
-                .then(data => {
-                    history.push('/dashboard');
-                    dispatch(_setBusinessAuth(data));
-                })
-        )
-    )
-} */
 export const login = (state, params, history) => {
-    const { username, password, type } = state;
-    const { recipientAddress } = params;
-    const chargeAmount = Number(params.chargeAmount);
+    const { username, password } = state;
+
     return dispatch => (
         axios.post('https://vast-plains-55545.herokuapp.com/api/auth', { username, password })
-            .then(res => res.data)
+            .then(res => res.data.data)
             .then(data => {
-                console.log(data)
                 window.localStorage.setItem('token', data.token);
-                dispatch(exchangeTokenForAuth(history));
+                dispatch(exchangeTokenForAuth(params, history));
             })
     )
 }
